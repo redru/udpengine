@@ -1,7 +1,7 @@
+package updengine.server;
+
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 
 public class Server extends Thread {
@@ -11,25 +11,27 @@ public class Server extends Thread {
     private byte[] buf = new byte[256];
 
     public Server() throws SocketException {
-        socket = new DatagramSocket(4445);
+        this(4445);
+    }
+
+    public Server(int port) throws SocketException {
+        socket = new DatagramSocket(port);
     }
 
     public void run() {
         running = true;
 
         while (running) {
-            DatagramPacket packet = new DatagramPacket(buf, buf.length);
+            GamePacket packet = new GamePacket(buf);
 
             try {
-                socket.receive(packet);
+                socket.receive(packet.getDatagramPacket());
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            InetAddress address = packet.getAddress();
-            int port = packet.getPort();
-            packet = new DatagramPacket(buf, buf.length, address, port);
-            String received = new String(packet.getData(), 0, packet.getLength());
+            String received = new String(packet.getDatagramPacket().getData(), 0, packet.getDatagramPacket().getLength());
+            System.out.println(received);
 
             if (received.equals("end")) {
                 running = false;
@@ -37,17 +39,13 @@ public class Server extends Thread {
             }
 
             try {
-                socket.send(packet);
+                socket.send(packet.getDatagramPacket());
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
         socket.close();
-    }
-
-    public static void main(String[] args) throws SocketException {
-        new Server().start();
     }
 
 }
